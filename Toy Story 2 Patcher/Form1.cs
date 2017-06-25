@@ -34,7 +34,7 @@ namespace Toy_Story_2_Patcher
             this.Text = this.Text + " (v" + VERSION + ")";
 
             //Automatically detect Toy2.exe in default directories         
-            String[] filePaths = { "\\"
+            String[] filePaths = {   getWorkingDirectory()
                                    , "C:\\Program Files (x86)\\Disney Interactive\\Toy Story 2\\"
                                    , "C:\\Program Files\\Disney Interactive\\Toy Story 2\\"
                                    , "M:\\Games\\Installed\\Toy Story 2\\"
@@ -73,11 +73,23 @@ namespace Toy_Story_2_Patcher
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 //Warn user if they aren't opening a toy2.exe file
-                if (!String.Equals(FILENAME, dialog.FileName))
+                if (!String.Equals(FILENAME, dialog.SafeFileName))
                     MessageBox.Show("Warning! This program only works with " + FILENAME + ".\nIt will damage or corrupt other kinds of .exe files.");
 
                 foundExeEvent(Path.GetFullPath(dialog.FileName));
             }
+        }
+
+        //Returns this program's directory
+        private String getWorkingDirectory()
+        {
+            String[] parts = System.Reflection.Assembly.GetExecutingAssembly().Location.Split('\\');
+            String result = "";
+
+            for (int i = 0; i < parts.Length - 1; i++)
+                result += parts[i] + "\\";
+
+            return result;
         }
 
         //Call this function every time a valid exe file is chosen
@@ -99,6 +111,11 @@ namespace Toy_Story_2_Patcher
         {
             bool result = true;
 
+            //Check if file size is smaller than patch offset + size
+            //If it is smaller, just stop
+            if (fileBuffer.Length < patch.offset + patch.newBytes.Length)
+                return false;
+            
             int count = 0;
             foreach (byte b in patch.newBytes)
             {
@@ -137,11 +154,14 @@ namespace Toy_Story_2_Patcher
                     byte[] fileBuffer = File.ReadAllBytes(tbFilePath.Text); //Read game file into memory
                     fileBackup(ref fileBuffer); //Try to backup file before patching it
 
-                    applyPatch(ref fileBuffer, pchASPECT);
+                    bool patchSuccess = applyPatch(ref fileBuffer, pchASPECT);
 
                     File.WriteAllBytes(tbFilePath.Text, fileBuffer); //Re write file
 
-                    MessageBox.Show("Patch complete!");
+                    if (patchSuccess == true)
+                        MessageBox.Show("Patch complete!");
+                    else
+                        MessageBox.Show("Patch failed. Chosen file was too small.");
                 }
             }
             else
@@ -163,12 +183,15 @@ namespace Toy_Story_2_Patcher
                 fileBackup(ref fileBuffer); //Try to backup file before patching it
 
                 //Apply or restore patches depending on checkbox state
-                applyPatch(ref fileBuffer, pch32BIT, cb32Bit.Checked);
-                applyPatch(ref fileBuffer, pchENUMERATE, cbSuitableDevice.Checked);
+                bool bitSuccess = applyPatch(ref fileBuffer, pch32BIT, cb32Bit.Checked);
+                bool enumerateSuccess = applyPatch(ref fileBuffer, pchENUMERATE, cbSuitableDevice.Checked);
 
                 File.WriteAllBytes(tbFilePath.Text, fileBuffer); //Re write exe file
 
-                MessageBox.Show("Patch complete!");
+                if (bitSuccess == true && enumerateSuccess == true)
+                    MessageBox.Show("Patch complete!");
+                else
+                    MessageBox.Show("Patch failed. Chosen file was too small.");
             }
             else
             {
@@ -179,13 +202,18 @@ namespace Toy_Story_2_Patcher
         }
 
         //Insert patch data into virtual version of the game file
-        private void applyPatch(ref byte[] fileBuffer, Patch patch, bool usenew = true)
+        private bool applyPatch(ref byte[] fileBuffer, Patch patch, bool usenew = true)
         {
             byte[] thisPatch = patch.newBytes;
-
+                 
             //Insert original bytes instead of the new ones
             if (usenew == false)
                 thisPatch = patch.oldBytes;
+
+            //Check if file size is smaller than patch offset + size
+            //If it is smaller, just stop
+            if (fileBuffer.Length < patch.offset + thisPatch.Length)
+                return false;
 
             int count = 0;
             foreach (byte b in thisPatch)
@@ -193,6 +221,8 @@ namespace Toy_Story_2_Patcher
                 fileBuffer[patch.offset + count] = b;
                 count++;
             }
+
+            return true;
         }
 
         //Checks if the chosen file exists and is valid
@@ -256,7 +286,7 @@ namespace Toy_Story_2_Patcher
 
         private void linkLabel2_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Process.Start("https://www.speedrun.com/toys2/thread/mh6ev/3#rk874");
+            Process.Start("https://github.com/JeffRuLz/Toy-Story-2-Widescreen-Tool");
         }    
     }
 

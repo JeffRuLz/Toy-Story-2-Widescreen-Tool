@@ -257,10 +257,10 @@
             this.llGithub.AutoSize = true;
             this.llGithub.Location = new System.Drawing.Point(13, 238);
             this.llGithub.Name = "llGithub";
-            this.llGithub.Size = new System.Drawing.Size(57, 13);
+            this.llGithub.Size = new System.Drawing.Size(249, 13);
             this.llGithub.TabIndex = 3;
             this.llGithub.TabStop = true;
-            this.llGithub.Text = "Github link";
+            this.llGithub.Text = "github.com/JeffRuLz/Toy-Story-2-Widescreen-Tool";
             this.llGithub.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabel2_LinkClicked);
             // 
             // Form1
